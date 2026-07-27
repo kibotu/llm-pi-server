@@ -1,0 +1,48 @@
+name: hermes-stack
+
+networks:
+  hermes-net:
+    external: true
+
+services:
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: hermes-llama-server
+    restart: unless-stopped
+    networks: [hermes-net]
+    ports:
+      - "${LLAMA_PORT:-8080}:8080"
+    volumes:
+      - ./models:/models:ro
+    command: >
+      -m /models/${MODEL_FILE}
+      --host 0.0.0.0
+      --port 8080
+      --ctx-size ${CTX_SIZE:-4096}
+      --threads ${LLAMA_THREADS:-4}
+      --cont-batching
+      --n-gpu-layers 0
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # Built only if ${HERMES_DIR}/Dockerfile exists - run.sh handles that check
+  # and passes --profile hermes accordingly.
+  hermes-agent:
+    build:
+      context: ${HERMES_DIR:-./hermes-agent}
+    container_name: hermes-agent
+    restart: unless-stopped
+    networks: [hermes-net]
+    ports:
+      - "${HERMES_PORT:-8000}:8000"
+    environment:
+      - LLAMA_SERVER_URL=http://llama-server:8080/v1
+      - FIRECRAWL_URL=http://firecrawl-api:3002
+    depends_on:
+      llama-server:
+        condition: service_healthy
+    profiles: ["hermes"]
