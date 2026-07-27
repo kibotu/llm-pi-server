@@ -40,7 +40,7 @@ All settings live in `.env`:
 |---|---|---|
 | `hf` | — | Hugging Face token (required) |
 | `MODEL_REPO` | `bartowski/Qwen_Qwen3.5-4B-GGUF` | HF repo |
-| `MODEL_FILE` | `Qwen_Qwen3.5-4B-Q4_K_M.gguf` | GGUF filename |
+| `MODEL_FILE` | [`Qwen_Qwen3.5-4B-Q4_K_M.gguf`](https://huggingface.co/bartowski/Qwen_Qwen3.5-4B-GGUF?show_file_info=Qwen_Qwen3.5-4B-Q4_K_M.gguf) | GGUF filename |
 | `LLAMA_PORT` | `5370` | Host port |
 | `CTX_SIZE` | `16384` | Context window (tokens) |
 | `LLAMA_THREADS` | `4` | CPU threads (Pi 5 has 4 cores) |
