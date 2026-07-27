@@ -46,6 +46,16 @@ warn() { printf "  ${YLW}! %s${RST}\n" "$1"; }
 fail() { printf "  ${RED}✘ %s${RST}\n" "$1"; }
 step() { printf "\n${BOLD}${BLU}▸ %s${RST}\n" "$1"; }
 die()  { fail "$1"; exit 1; }
+hint() { printf "       ${DIM}→ %s${RST}\n" "$1"; }
+
+need() {
+  local cmd="$1" pkg="${2:-$1}" install_cmd="$3"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    fail "$cmd not found"
+    hint "$install_cmd"
+    exit 1
+  fi
+}
 
 run_quiet() {
   local desc="$1"; shift
@@ -98,7 +108,9 @@ banner
 step "Configuration"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  die ".env not found. Copy env.example → .env and set your hf= token."
+  fail ".env not found"
+  hint "cp env.example .env && nano .env"
+  exit 1
 fi
 
 set -a
@@ -106,7 +118,11 @@ set -a
 source "$ENV_FILE"
 set +a
 
-[[ -n "${hf:-}" ]] || die "hf= (Hugging Face token) not set in .env"
+if [[ -z "${hf:-}" ]]; then
+  fail "hf= (Hugging Face token) not set in .env"
+  hint "echo 'hf=hf_YOUR_TOKEN' >> .env"
+  exit 1
+fi
 export HF_TOKEN="$hf"
 
 MODEL_REPO="${MODEL_REPO:-bartowski/Qwen_Qwen3.5-4B-GGUF}"
@@ -123,11 +139,20 @@ ok "ctx    ${DIM}${CTX_SIZE}${RST}"
 
 step "Preflight"
 
-command -v docker >/dev/null 2>&1 || die "docker not found"
-docker info >/dev/null 2>&1        || die "docker daemon not reachable"
+need docker docker "curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER"
+if ! docker info >/dev/null 2>&1; then
+  fail "docker daemon not reachable"
+  hint "sudo systemctl start docker"
+  hint "sudo usermod -aG docker \$USER && newgrp docker"
+  exit 1
+fi
 ok "docker"
 
-docker compose version >/dev/null 2>&1 || die "docker compose v2 plugin not found"
+if ! docker compose version >/dev/null 2>&1; then
+  fail "docker compose v2 plugin not found"
+  hint "sudo apt-get install docker-compose-plugin"
+  exit 1
+fi
 ok "docker compose"
 
 if [[ -f /proc/meminfo ]]; then
@@ -148,10 +173,19 @@ step "Hugging Face CLI"
 if command -v hf >/dev/null 2>&1; then
   skip "hf CLI"
 else
-  command -v pip3 >/dev/null 2>&1 || die "pip3 not found — needed to install hf CLI"
+  if ! command -v pip3 >/dev/null 2>&1; then
+    fail "pip3 not found (needed to install hf CLI)"
+    hint "sudo apt-get install python3-pip"
+    exit 1
+  fi
   run_quiet "installing huggingface_hub[cli]" pip3 install --user -q "huggingface_hub[cli]"
   export PATH="$HOME/.local/bin:$PATH"
-  command -v hf >/dev/null 2>&1 || die "hf CLI not on PATH after install"
+  if ! command -v hf >/dev/null 2>&1; then
+    fail "hf CLI not on PATH after install"
+    hint "pip3 install -U 'huggingface_hub[cli]'"
+    hint "export PATH=\"\$HOME/.local/bin:\$PATH\""
+    exit 1
+  fi
   ok "installed hf CLI"
 fi
 
