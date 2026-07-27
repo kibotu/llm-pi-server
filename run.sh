@@ -172,16 +172,8 @@ mkdir -p "$MODELS_DIR"
 
 step "Hugging Face CLI"
 
-hf_cmd=""
-for candidate in huggingface-cli hf; do
-  if command -v "$candidate" >/dev/null 2>&1; then
-    hf_cmd="$candidate"
-    break
-  fi
-done
-
-if [[ -n "$hf_cmd" ]]; then
-  skip "$hf_cmd"
+if command -v hf >/dev/null 2>&1; then
+  skip "hf CLI"
 else
   if command -v pipx >/dev/null 2>&1; then
     run_quiet "installing huggingface-hub via pipx" pipx install huggingface-hub
@@ -193,19 +185,13 @@ else
     hint "sudo apt-get install -y python3-pip"
     exit 1
   fi
-  for candidate in huggingface-cli hf; do
-    if command -v "$candidate" >/dev/null 2>&1; then
-      hf_cmd="$candidate"
-      break
-    fi
-  done
-  if [[ -z "$hf_cmd" ]]; then
-    fail "huggingface-cli not on PATH after install"
+  if ! command -v hf >/dev/null 2>&1; then
+    fail "hf command not on PATH after install"
     hint "pip3 install --user --break-system-packages huggingface-hub"
     hint "Make sure ~/.local/bin is in your PATH"
     exit 1
   fi
-  ok "installed $hf_cmd"
+  ok "installed hf CLI"
 fi
 
 # ── 4. Model download ────────────────────────────────────────────────
@@ -220,9 +206,9 @@ if [[ "$FORCE_DOWNLOAD" == "0" ]] && [[ -f "$MODEL_PATH" ]] \
 else
   printf "  ${DIM}downloading %s …${RST}\n" "$MODEL_FILE"
   if (( VERBOSE )); then
-    "$hf_cmd" download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN"
+    hf download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN"
   else
-    "$hf_cmd" download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN" \
+    hf download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN" \
       2>&1 | grep -iE 'error|fail|%' || true
   fi
   [[ -f "$MODEL_PATH" ]] || die "download finished but $MODEL_FILE not found"
