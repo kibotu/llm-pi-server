@@ -12,7 +12,6 @@ Context is set to 4096 tokens by default — enough for ComfyUI workflow prompts
 git clone <repo-url> && cd llm-pi-server
 cp env.example .env
 # edit .env — set hf= to your Hugging Face token
-chmod +x run.sh
 ./run.sh
 ```
 
@@ -43,7 +42,7 @@ All settings live in `.env`:
 | `MODEL_REPO` | `bartowski/Qwen_Qwen3.5-4B-GGUF` | HF repo |
 | `MODEL_FILE` | `Qwen_Qwen3.5-4B-Q4_K_M.gguf` | GGUF filename |
 | `LLAMA_PORT` | `5370` | Host port |
-| `CTX_SIZE` | `4096` | Context window (tokens) |
+| `CTX_SIZE` | `16384` | Context window (tokens) |
 | `LLAMA_THREADS` | `4` | CPU threads (Pi 5 has 4 cores) |
 
 ## Requirements
