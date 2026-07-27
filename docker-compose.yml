@@ -23,8 +23,7 @@ services:
       -ctv q8_0
       --cont-batching
       --jinja
-      --reasoning on
-      --reasoning-preserve
+      --reasoning off
       --mlock
       --no-mmap
       --metrics
