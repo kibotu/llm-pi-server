@@ -173,16 +173,19 @@ step "Hugging Face CLI"
 if command -v hf >/dev/null 2>&1; then
   skip "hf CLI"
 else
-  if ! command -v pip3 >/dev/null 2>&1; then
-    fail "pip3 not found (needed to install hf CLI)"
-    hint "sudo apt-get install python3-pip"
+  if command -v pipx >/dev/null 2>&1; then
+    run_quiet "installing hf CLI via pipx" pipx install "huggingface_hub[cli]"
+  elif command -v pip3 >/dev/null 2>&1; then
+    run_quiet "installing hf CLI via pip" pip3 install --user --break-system-packages -q "huggingface_hub[cli]"
+  else
+    fail "pip3/pipx not found (needed to install hf CLI)"
+    hint "sudo apt-get install pipx && pipx ensurepath"
     exit 1
   fi
-  run_quiet "installing huggingface_hub[cli]" pip3 install --user -q "huggingface_hub[cli]"
   export PATH="$HOME/.local/bin:$PATH"
   if ! command -v hf >/dev/null 2>&1; then
     fail "hf CLI not on PATH after install"
-    hint "pip3 install -U 'huggingface_hub[cli]'"
+    hint "pipx install 'huggingface_hub[cli]'"
     hint "export PATH=\"\$HOME/.local/bin:\$PATH\""
     exit 1
   fi
