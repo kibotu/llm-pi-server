@@ -15,7 +15,14 @@ services:
       --port 8080
       --ctx-size ${CTX_SIZE:-16384}
       --threads ${LLAMA_THREADS:-4}
+      -ctk q8_0
+      -ctv q8_0
+      --flash-attn on
       --cont-batching
+      --jinja
+      --mlock
+      --no-mmap
+      --metrics
       --n-gpu-layers 0
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8080/health"]
