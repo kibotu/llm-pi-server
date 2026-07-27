@@ -4,7 +4,7 @@ OpenAI-compatible LLM server for Raspberry Pi 5, powered by llama.cpp.
 
 Runs **Qwen 3.5 4B** (Q4\_K\_M, 3 GB) on port `5370`. Designed to sit alongside a Hermes agent and Firecrawl container on a shared Pi — the defaults are tuned for that (~3.3 GB RAM including KV cache, leaving room for the rest of the stack).
 
-Context is set to 4096 tokens by default — enough for ComfyUI workflow prompts and typical agent conversations.
+Context is set to 16384 tokens by default — enough for ComfyUI workflow prompts and typical agent conversations.
 
 ## Quick start
 
@@ -74,10 +74,12 @@ custom_providers:
     api_key: sk-no-key-required
     api_mode: chat_completions
     models:
-      Qwen_Qwen3.5-4B-Q4_K_M.gguf:
+      /models/Qwen_Qwen3.5-4B-Q4_K_M.gguf:
         context_length: 16384
 ```
 
+> **Important:** The model ID must match exactly what the server reports at `/v1/models`.
+> llama.cpp uses the full path passed to `-m` (e.g. `/models/Qwen_Qwen3.5-4B-Q4_K_M.gguf`).
 > If Hermes runs on a different machine, replace `localhost` with the Pi's IP.
 
 ### 2. Model alias (quick switch with `/pi`)
@@ -86,7 +88,7 @@ custom_providers:
 model_aliases:
   pi:
     provider: custom:pi
-    model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
+    model: /models/Qwen_Qwen3.5-4B-Q4_K_M.gguf
     base_url: http://localhost:5370/v1
     api_key: sk-no-key-required
 ```
@@ -111,7 +113,7 @@ quick_commands:
 ```yaml
 fallback_model:
   provider: custom:pi
-  model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
+  model: /models/Qwen_Qwen3.5-4B-Q4_K_M.gguf
   base_url: http://localhost:5370/v1
   api_key: sk-no-key-required
 ```
@@ -120,7 +122,12 @@ When the default model and all other configured providers return errors, Hermes 
 
 ## Performance
 
-Expect ~4-6 tokens/sec decode with Qwen 3.5 4B Q4\_K\_M on Pi 5 8 GB. Prompt evaluation runs faster (~30 tok/s). If you need more speed and less quality, swap to a 1.5B model in `.env`.
+Measured with Qwen 3.5 4B Q4\_K\_M on Pi 5 8 GB:
+
+- **Prompt eval:** ~7.7 tok/s
+- **Decode:** ~2.8 tok/s
+
+Slower than GPU-backed servers, but sufficient as a fallback or for short completions. If you need more speed and less quality, swap to a 1.5B model in `.env`.
 
 ## License
 
