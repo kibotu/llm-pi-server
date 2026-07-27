@@ -13,6 +13,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
+export PATH="$HOME/.local/bin:$PATH"
+
 ENV_FILE="$ROOT_DIR/.env"
 MODELS_DIR="$ROOT_DIR/models"
 LOCK_FILE="/tmp/pi-llama.lock"
@@ -170,26 +172,40 @@ mkdir -p "$MODELS_DIR"
 
 step "Hugging Face CLI"
 
-if command -v hf >/dev/null 2>&1; then
-  skip "hf CLI"
+hf_cmd=""
+for candidate in huggingface-cli hf; do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    hf_cmd="$candidate"
+    break
+  fi
+done
+
+if [[ -n "$hf_cmd" ]]; then
+  skip "$hf_cmd"
 else
   if command -v pipx >/dev/null 2>&1; then
-    run_quiet "installing hf CLI via pipx" pipx install "huggingface_hub[cli]"
+    run_quiet "installing huggingface-hub via pipx" pipx install huggingface-hub
   elif command -v pip3 >/dev/null 2>&1; then
-    run_quiet "installing hf CLI via pip" pip3 install --user --break-system-packages -q "huggingface_hub[cli]"
+    run_quiet "installing huggingface-hub via pip" pip3 install --user --break-system-packages -q huggingface-hub
   else
-    fail "pip3/pipx not found (needed to install hf CLI)"
-    hint "sudo apt-get install pipx && pipx ensurepath"
+    fail "pip3/pipx not found (needed to install huggingface-hub)"
+    hint "sudo apt-get install -y pipx && pipx ensurepath"
+    hint "sudo apt-get install -y python3-pip"
     exit 1
   fi
-  export PATH="$HOME/.local/bin:$PATH"
-  if ! command -v hf >/dev/null 2>&1; then
-    fail "hf CLI not on PATH after install"
-    hint "pipx install 'huggingface_hub[cli]'"
-    hint "export PATH=\"\$HOME/.local/bin:\$PATH\""
+  for candidate in huggingface-cli hf; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      hf_cmd="$candidate"
+      break
+    fi
+  done
+  if [[ -z "$hf_cmd" ]]; then
+    fail "huggingface-cli not on PATH after install"
+    hint "pip3 install --user --break-system-packages huggingface-hub"
+    hint "Make sure ~/.local/bin is in your PATH"
     exit 1
   fi
-  ok "installed hf CLI"
+  ok "installed $hf_cmd"
 fi
 
 # ── 4. Model download ────────────────────────────────────────────────
@@ -204,9 +220,9 @@ if [[ "$FORCE_DOWNLOAD" == "0" ]] && [[ -f "$MODEL_PATH" ]] \
 else
   printf "  ${DIM}downloading %s …${RST}\n" "$MODEL_FILE"
   if (( VERBOSE )); then
-    hf download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN"
+    "$hf_cmd" download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN"
   else
-    hf download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN" \
+    "$hf_cmd" download "$MODEL_REPO" --include "$MODEL_FILE" --local-dir "$MODELS_DIR" --token "$HF_TOKEN" \
       2>&1 | grep -iE 'error|fail|%' || true
   fi
   [[ -f "$MODEL_PATH" ]] || die "download finished but $MODEL_FILE not found"
