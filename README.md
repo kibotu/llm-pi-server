@@ -25,12 +25,12 @@ The script will:
 ## API
 
 ```
-http://<pi-ip>:5370/v1/chat/completions
-http://<pi-ip>:5370/v1/completions
-http://<pi-ip>:5370/health
+http://localhost:5370/v1/chat/completions
+http://localhost:5370/v1/completions
+http://localhost:5370/health
 ```
 
-Point Hermes, Open WebUI, or any OpenAI-compatible client at `http://<pi-ip>:5370/v1`.
+The container exposes port 5370 on all host interfaces, so services on the same Pi (Hermes, Open WebUI, etc.) reach it at `http://localhost:5370/v1`. From other machines on your network, use `http://<pi-ip>:5370/v1`.
 
 ## Configuration
 
@@ -70,13 +70,15 @@ Add the Pi server as a **custom provider**, a **model alias**, and optionally as
 ```yaml
 custom_providers:
   - name: pi
-    base_url: http://<pi-ip>:5370/v1
+    base_url: http://localhost:5370/v1
     api_key: sk-no-key-required
     api_mode: chat_completions
     models:
       Qwen_Qwen3.5-4B-Q4_K_M.gguf:
         context_length: 16384
 ```
+
+> If Hermes runs on a different machine, replace `localhost` with the Pi's IP.
 
 ### 2. Model alias (quick switch with `/pi`)
 
@@ -85,7 +87,7 @@ model_aliases:
   pi:
     provider: custom:pi
     model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
-    base_url: http://<pi-ip>:5370/v1
+    base_url: http://localhost:5370/v1
     api_key: sk-no-key-required
 ```
 
@@ -110,11 +112,11 @@ quick_commands:
 fallback_model:
   provider: custom:pi
   model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
-  base_url: http://<pi-ip>:5370/v1
+  base_url: http://localhost:5370/v1
   api_key: sk-no-key-required
 ```
 
-When the default model and all other configured providers return errors, Hermes will automatically route to the Pi. This keeps you operational even during cloud outages — responses will be slower but you stay unblocked.
+When the default model and all other configured providers return errors, Hermes automatically routes to the Pi. This keeps you operational even during cloud outages — responses will be slower but you stay unblocked.
 
 ## Performance
 
