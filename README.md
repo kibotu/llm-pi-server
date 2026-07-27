@@ -61,6 +61,61 @@ All settings live in `.env`:
 ./run.sh -v           # verbose output
 ```
 
+## Hermes integration
+
+Add the Pi server as a **custom provider**, a **model alias**, and optionally as the **fallback model** so Hermes falls back to your local hardware when all cloud providers fail.
+
+### 1. Custom provider
+
+```yaml
+custom_providers:
+  - name: pi
+    base_url: http://<pi-ip>:5370/v1
+    api_key: sk-no-key-required
+    api_mode: chat_completions
+    models:
+      Qwen_Qwen3.5-4B-Q4_K_M.gguf:
+        context_length: 16384
+```
+
+### 2. Model alias (quick switch with `/pi`)
+
+```yaml
+model_aliases:
+  pi:
+    provider: custom:pi
+    model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
+    base_url: http://<pi-ip>:5370/v1
+    api_key: sk-no-key-required
+```
+
+Then switch at any time:
+
+```
+/model pi
+```
+
+Or add a quick command:
+
+```yaml
+quick_commands:
+  pi:
+    type: alias
+    target: /model pi
+```
+
+### 3. Fallback model (last resort when everything else is down)
+
+```yaml
+fallback_model:
+  provider: custom:pi
+  model: Qwen_Qwen3.5-4B-Q4_K_M.gguf
+  base_url: http://<pi-ip>:5370/v1
+  api_key: sk-no-key-required
+```
+
+When the default model and all other configured providers return errors, Hermes will automatically route to the Pi. This keeps you operational even during cloud outages — responses will be slower but you stay unblocked.
+
 ## Performance
 
 Expect ~4-6 tokens/sec decode with Qwen 3.5 4B Q4\_K\_M on Pi 5 8 GB. Prompt evaluation runs faster (~30 tok/s). If you need more speed and less quality, swap to a 1.5B model in `.env`.
