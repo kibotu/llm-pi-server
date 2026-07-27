@@ -52,6 +52,8 @@ All settings live in `.env`:
 | `-ctk` / `-ctv` | `q8_0` | KV cache quantization — halves memory vs `f16` with negligible quality loss. Use `q4_0` to push context higher. |
 | `--flash-attn` | `on` | Fused attention kernels — reduces memory overhead and speeds up longer-context prefill on ARM NEON. |
 | `--jinja` | on | Use the model's built-in Jinja chat template. Required for correct Qwen3.x prompting and tool calling. |
+| `--reasoning` | `on` | Qwen3 extended thinking / `<think>` blocks. Improves quality at the cost of more tokens. Disable with `off` for faster, terser answers. |
+| `--reasoning-preserve` | on | Keep reasoning in the prompt across turns so the KV cache stays valid for multi-turn agent conversations. |
 | `--mlock` | on | Lock model weights in RAM so the OS never pages them under pressure from Hermes / Firecrawl. |
 | `--no-mmap` | on | Read weights into RAM upfront instead of lazy mmap. Slower cold start, but avoids page-cache eviction stalls on a multi-service Pi. |
 | `--metrics` | on | Expose Prometheus-style metrics at `/metrics` for monitoring tok/s. |

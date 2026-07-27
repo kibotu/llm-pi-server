@@ -9,6 +9,10 @@ services:
       - "${LLAMA_PORT:-5370}:8080"
     volumes:
       - ./models:/models:ro
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     command: >
       -m /models/${MODEL_FILE:-Qwen_Qwen3.5-4B-Q4_K_M.gguf}
       --host 0.0.0.0
@@ -17,9 +21,10 @@ services:
       --threads ${LLAMA_THREADS:-4}
       -ctk q8_0
       -ctv q8_0
-      --flash-attn on
       --cont-batching
       --jinja
+      --reasoning on
+      --reasoning-preserve
       --mlock
       --no-mmap
       --metrics
